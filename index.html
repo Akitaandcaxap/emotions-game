@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Совмещение эмоций</title>
+<style>
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    padding: 32px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f4d5bb;
+    color: #000;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .app { width: 100%; max-width: 480px; text-align: center; }
+
+  h1 {
+    margin: 0 0 6px;
+    font-size: 26px;
+    letter-spacing: .3px;
+    color: #b00149;
+  }
+
+  .sub {
+    margin: 0 0 26px;
+    font-size: 14px;
+    color: #000;
+    opacity: .6;
+  }
+
+  /* --- Миксер --- */
+  .mixer {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 16px;
+    margin-bottom: 22px;
+  }
+
+  .slot-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 9px;
+  }
+
+  .slot {
+    width: 84px;
+    height: 84px;
+    padding: 0;
+    border-radius: 50%;
+    border: 2px dashed #b00149;
+    background: transparent;
+    cursor: pointer;
+    transition: transform .15s ease, background .2s ease, border-color .2s ease;
+  }
+
+  .slot:hover { transform: scale(1.05); }
+  .slot:active { transform: scale(.96); }
+
+  .slot-label {
+    height: 14px;
+    font-size: 12px;
+    line-height: 14px;
+    color: #000;
+  }
+
+  .plus {
+    font-size: 30px;
+    font-weight: 700;
+    color: #b00149;
+    line-height: 84px;
+    user-select: none;
+  }
+
+  /* --- Кнопка --- */
+  .btn {
+    padding: 13px 30px;
+    border: none;
+    border-radius: 10px;
+    background: #b00149;
+    color: #fff;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: .3px;
+    cursor: pointer;
+    transition: opacity .15s ease, transform .1s ease;
+  }
+
+  .btn:disabled { opacity: .3; cursor: default; }
+  .btn:not(:disabled):hover { opacity: .9; }
+  .btn:not(:disabled):active { transform: scale(.97); }
+
+  /* --- Результат --- */
+  .result {
+    min-height: 132px;
+    margin: 24px 0 6px;
+  }
+
+  .result-dot {
+    width: 76px;
+    height: 76px;
+    margin: 0 auto 12px;
+    border-radius: 50%;
+    background: #e6d8cc;
+    opacity: 0;
+    transform: scale(.5);
+    transition: opacity .3s ease, transform .35s cubic-bezier(.2, 1.4, .5, 1);
+  }
+
+  .result-dot.show { opacity: 1; transform: scale(1); }
+
+  .result-name {
+    min-height: 28px;
+    font-size: 21px;
+    font-weight: 700;
+    color: #b00149;
+  }
+
+  /* --- Палитра --- */
+  .palette {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 16px 20px;
+    margin: 16px 0 24px;
+  }
+
+  .emo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 0;
+    border: none;
+    background: none;
+    font-family: inherit;
+    cursor: pointer;
+  }
+
+  .dot {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    box-shadow: inset 0 -3px 0 rgba(0, 0, 0, .13);
+    transition: transform .15s ease;
+  }
+
+  .emo:hover .dot { transform: translateY(-4px) scale(1.07); }
+  .emo:active .dot { transform: scale(.94); }
+
+  .lbl { font-size: 12px; color: #000; }
+
+  /* --- Подвал --- */
+  .footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 14px;
+    border-top: 1px solid rgba(176, 1, 73, .22);
+    font-size: 13px;
+  }
+
+  .link {
+    border: none;
+    background: none;
+    padding: 0;
+    font: inherit;
+    color: #b00149;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+
+  @media (max-width: 380px) {
+    .slot { width: 72px; height: 72px; }
+    .plus { line-height: 72px; }
+    .dot { width: 48px; height: 48px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <h1>Совмещение эмоций</h1>
+  <p class="sub">Выбери две эмоции и смешай их</p>
+
+  <div class="mixer">
+    <div class="slot-wrap">
+      <button class="slot" data-i="0" aria-label="первый слот"></button>
+      <div class="slot-label" id="lab0"></div>
+    </div>
+    <div class="plus">+</div>
+    <div class="slot-wrap">
+      <button class="slot" data-i="1" aria-label="второй слот"></button>
+      <div class="slot-label" id="lab1"></div>
+    </div>
+  </div>
+
+  <button class="btn" id="mixBtn" disabled>Смешать</button>
+
+  <div class="result">
+    <div class="result-dot" id="resultDot"></div>
+    <div class="result-name" id="resultName"></div>
+  </div>
+
+  <div class="palette" id="palette"></div>
+
+  <div class="footer">
+    <span id="counter">Открыто: 0 / 15</span>
+    <button class="link" id="resetBtn">Сброс</button>
+  </div>
+</div>
+
+<script>
+  const EMO = {
+    anger:   { name: 'Злость',      color: '#e03131' },
+    happy:   { name: 'Счастье',     color: '#f2c31a' },
+    sad:     { name: 'Грусть',      color: '#3b7ddd' },
+    disgust: { name: 'Отвращение',  color: '#3fae5a' },
+    neutral: { name: 'Безразличие', color: '#9aa0a6' }
+  };
+
+  const COMBOS = {
+    'anger+anger':     'Ярость',
+    'anger+disgust':   'Ненависть',
+    'anger+happy':     'Злорадство',
+    'anger+neutral':   'Раздражение',
+    'anger+sad':       'Обида',
+    'disgust+disgust': 'Омерзение',
+    'disgust+happy':   'Сарказм',
+    'disgust+neutral': 'Пренебрежение',
+    'disgust+sad':     'Уныние',
+    'happy+happy':     'Эйфория',
+    'happy+neutral':   'Пофигизм',
+    'happy+sad':       'Ностальгия',
+    'neutral+neutral': 'Пофигизм',
+    'neutral+sad':     'Опустошённость',
+    'sad+sad':         'Депрессия'
+  };
+
+  const TOTAL = Object.keys(COMBOS).length;
+
+  const slots      = [null, null];
+  const found      = new Set();
+  const mixBtn     = document.getElementById('mixBtn');
+  const resultDot  = document.getElementById('resultDot');
+  const resultName = document.getElementById('resultName');
+  const counter    = document.getElementById('counter');
+  const palette    = document.getElementById('palette');
+
+  const comboKey = (a, b) => [a, b].sort().join('+');
+
+  function mixColors(c1, c2) {
+    const parse = h => [1, 3, 5].map(i => parseInt(h.substr(i, 2), 16));
+    const a = parse(c1), b = parse(c2);
+    return '#' + a.map((v, i) =>
+      Math.round((v + b[i]) / 2).toString(16).padStart(2, '0')
+    ).join('');
+  }
+
+  function renderSlots() {
+    [0, 1].forEach(i => {
+      const el  = document.querySelector('.slot[data-i="' + i + '"]');
+      const lab = document.getElementById('lab' + i);
+      const id  = slots[i];
+
+      if (id) {
+        el.style.background   = EMO[id].color;
+        el.style.borderStyle  = 'solid';
+        el.style.borderColor  = 'transparent';
+        lab.textContent = EMO[id].name;
+      } else {
+        el.style.background  = 'transparent';
+        el.style.borderStyle = 'dashed';
+        el.style.borderColor = '#b00149';
+        lab.textContent = '';
+      }
+    });
+    mixBtn.disabled = !(slots[0] && slots[1]);
+  }
+
+  function clearResult() {
+    resultDot.classList.remove('show');
+    resultName.textContent = '';
+  }
+
+  function pick(id) {
+    clearResult();
+    if (!slots[0])      slots[0] = id;
+    else if (!slots[1]) slots[1] = id;
+    else                slots[1] = id;   // заменяем последнюю
+    renderSlots();
+  }
+
+  function mix() {
+    if (!slots[0] || !slots[1]) return;
+
+    const key  = comboKey(slots[0], slots[1]);
+    const name = COMBOS[key] || 'Неизвестное чувство';
+
+    resultDot.style.background = mixColors(EMO[slots[0]].color, EMO[slots[1]].color);
+    resultName.textContent = name;
+
+    // перезапуск анимации
+    resultDot.classList.remove('show');
+    void resultDot.offsetWidth;
+    resultDot.classList.add('show');
+
+    if (COMBOS[key]) {
+      found.add(key);
+      counter.textContent = 'Открыто: ' + found.size + ' / ' + TOTAL;
+    }
+  }
+
+  // Палитра эмоций
+  Object.entries(EMO).forEach(([id, e]) => {
+    const b = document.createElement('button');
+    b.className = 'emo';
+    b.innerHTML =
+      '<span class="dot" style="background:' + e.color + '"></span>' +
+      '<span class="lbl">' + e.name + '</span>';
+    b.addEventListener('click', () => pick(id));
+    palette.appendChild(b);
+  });
+
+  // Клик по слоту — очистить
+  document.querySelectorAll('.slot').forEach(el => {
+    el.addEventListener('click', () => {
+      slots[+el.dataset.i] = null;
+      clearResult();
+      renderSlots();
+    });
+  });
+
+  mixBtn.addEventListener('click', mix);
+
+  document.getElementById('resetBtn').addEventListener('click', () => {
+    slots[0] = slots[1] = null;
+    clearResult();
+    renderSlots();
+  });
+
+  renderSlots();
+</script>
+</body>
+</html>
