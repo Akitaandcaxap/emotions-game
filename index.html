@@ -5,323 +5,763 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Совмещение эмоций</title>
 <style>
-  * { box-sizing: border-box; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
   body {
     margin: 0;
     min-height: 100vh;
-    padding: 32px 20px;
+    padding: 24px 16px;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
     background: #f4d5bb;
     color: #000;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-    -webkit-tap-highlight-color: transparent;
+    overflow-x: hidden;
   }
 
-  .app { width: 100%; max-width: 480px; text-align: center; }
+  .app { width: 100%; max-width: 480px; text-align: center; position: relative; }
 
-  h1 {
-    margin: 0 0 6px;
-    font-size: 26px;
-    letter-spacing: .3px;
-    color: #b00149;
+  .header {
+    display: flex; align-items: center; justify-content: center;
+    gap: 10px; margin-bottom: 4px; position: relative;
+  }
+  h1 { margin: 0; font-size: 24px; letter-spacing: .3px; color: #b00149; }
+
+  .book-btn {
+    position: relative; padding: 6px; border: none; background: none;
+    cursor: pointer; color: #b00149; display: flex; align-items: center;
+    transition: transform .15s;
+  }
+  .book-btn:hover { transform: scale(1.12) rotate(-4deg); }
+  .book-btn svg { width: 24px; height: 24px; }
+  .book-btn .badge {
+    position: absolute; top: 0; right: 0; width: 10px; height: 10px;
+    border-radius: 50%; background: #b00149; animation: ping 1s infinite;
+  }
+  @keyframes ping {
+    0%,100% { transform: scale(1); opacity: 1; }
+    50%      { transform: scale(1.5); opacity: .6; }
   }
 
-  .sub {
-    margin: 0 0 26px;
-    font-size: 14px;
-    color: #000;
-    opacity: .6;
-  }
+  .sub { margin: 0 0 22px; font-size: 13px; opacity: .6; }
 
-  /* --- Миксер --- */
   .mixer {
-    display: flex;
-    align-items: flex-start;
-    justify-content: center;
-    gap: 16px;
-    margin-bottom: 22px;
-  }
-
-  .slot-wrap {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 9px;
+    display: flex; align-items: center; justify-content: center;
+    gap: 4px; margin-bottom: 20px;
   }
 
   .slot {
-    width: 84px;
-    height: 84px;
-    padding: 0;
-    border-radius: 50%;
-    border: 2px dashed #b00149;
-    background: transparent;
-    cursor: pointer;
-    transition: transform .15s ease, background .2s ease, border-color .2s ease;
+    width: 58px; height: 58px; padding: 0; border-radius: 50%;
+    border: 2px dashed #b00149; background: transparent; cursor: pointer;
+    transition: transform .15s, background .2s, border-color .2s;
+    position: relative; flex-shrink: 0;
+  }
+  .slot:hover  { transform: scale(1.06); }
+  .slot:active { transform: scale(.95); }
+  .slot.filled { border-style: solid; border-color: transparent; }
+  .slot.pop { animation: pop .38s cubic-bezier(.2, 1.6, .5, 1); }
+
+  @keyframes pop {
+    0%   { transform: scale(.5); }
+    60%  { transform: scale(1.15); }
+    100% { transform: scale(1); }
   }
 
-  .slot:hover { transform: scale(1.05); }
-  .slot:active { transform: scale(.96); }
-
-  .slot-label {
-    height: 14px;
-    font-size: 12px;
-    line-height: 14px;
-    color: #000;
+  .slot .slot-name {
+    position: absolute; inset: 0; display: flex; align-items: center;
+    justify-content: center; font-size: 9px; color: #fff; font-weight: 700;
+    text-align: center; padding: 4px; line-height: 1.1; pointer-events: none;
+    text-shadow: 0 1px 2px rgba(0,0,0,.45);
   }
 
   .plus {
-    font-size: 30px;
-    font-weight: 700;
-    color: #b00149;
-    line-height: 84px;
-    user-select: none;
+    font-size: 16px; font-weight: 700; color: #b00149;
+    opacity: .5; user-select: none; margin: 0 1px;
   }
 
-  /* --- Кнопка --- */
   .btn {
-    padding: 13px 30px;
-    border: none;
-    border-radius: 10px;
-    background: #b00149;
-    color: #fff;
-    font-family: inherit;
-    font-size: 15px;
-    font-weight: 600;
-    letter-spacing: .3px;
-    cursor: pointer;
-    transition: opacity .15s ease, transform .1s ease;
+    padding: 13px 32px; border: none; border-radius: 10px;
+    background: #b00149; color: #fff; font-family: inherit;
+    font-size: 15px; font-weight: 600; letter-spacing: .3px; cursor: pointer;
+    transition: opacity .15s, transform .1s, box-shadow .2s;
   }
-
   .btn:disabled { opacity: .3; cursor: default; }
-  .btn:not(:disabled):hover { opacity: .9; }
+  .btn:not(:disabled):hover { opacity: .92; box-shadow: 0 6px 20px rgba(176,1,73,.3); }
   .btn:not(:disabled):active { transform: scale(.97); }
 
-  /* --- Результат --- */
   .result {
-    min-height: 132px;
-    margin: 24px 0 6px;
+    min-height: 150px; margin: 20px 0 8px;
+    display: flex; flex-direction: column; align-items: center;
   }
-
+  .result-wrap {
+    position: relative; width: 90px; height: 90px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .result-glow {
+    position: absolute; inset: -15px; border-radius: 50%;
+    opacity: 0; filter: blur(18px); transition: opacity .4s;
+    pointer-events: none;
+  }
+  .result-glow.show { opacity: .8; animation: glowPulse 1.8s ease-out; }
+  @keyframes glowPulse {
+    0%   { transform: scale(.5);  opacity: 0; }
+    40%  { transform: scale(1.25); opacity: .95; }
+    100% { transform: scale(1);   opacity: .6; }
+  }
   .result-dot {
-    width: 76px;
-    height: 76px;
-    margin: 0 auto 12px;
-    border-radius: 50%;
-    background: #e6d8cc;
-    opacity: 0;
-    transform: scale(.5);
-    transition: opacity .3s ease, transform .35s cubic-bezier(.2, 1.4, .5, 1);
+    width: 76px; height: 76px; border-radius: 50%; background: #e6d8cc;
+    opacity: 0; transform: scale(.3);
+    transition: opacity .3s, transform .4s cubic-bezier(.2, 1.4, .5, 1);
+    position: relative; z-index: 1;
   }
-
   .result-dot.show { opacity: 1; transform: scale(1); }
 
+  .particles { position: absolute; inset: 0; pointer-events: none; }
+  .particle {
+    position: absolute; left: 50%; top: 50%;
+    border-radius: 50%; animation: burst .9s cubic-bezier(.15,.7,.4,1) forwards;
+  }
+  @keyframes burst {
+    0%   { transform: translate(-50%,-50%) scale(1); opacity: 1; }
+    100% { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(0); opacity: 0; }
+  }
+
   .result-name {
-    min-height: 28px;
-    font-size: 21px;
-    font-weight: 700;
-    color: #b00149;
+    min-height: 28px; font-size: 19px; font-weight: 700; color: #b00149;
+    margin-top: 4px; padding: 0 8px;
+  }
+  .result-name.appear { animation: slideIn .4s ease; }
+  @keyframes slideIn {
+    0%   { opacity: 0; transform: translateY(8px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  .result-tag {
+    font-size: 11px; opacity: .55; margin-top: 2px; min-height: 14px;
   }
 
-  /* --- Палитра --- */
   .palette {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 16px 20px;
-    margin: 16px 0 24px;
+    display: flex; flex-wrap: wrap; justify-content: center;
+    gap: 14px 16px; margin: 8px 0 22px;
   }
-
   .emo {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-    padding: 0;
-    border: none;
-    background: none;
-    font-family: inherit;
-    cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    padding: 0; border: none; background: none;
+    font-family: inherit; cursor: pointer;
   }
-
-  .dot {
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    box-shadow: inset 0 -3px 0 rgba(0, 0, 0, .13);
-    transition: transform .15s ease;
+  .emo .dot {
+    width: 52px; height: 52px; border-radius: 50%;
+    box-shadow: inset 0 -3px 0 rgba(0,0,0,.14), 0 3px 8px rgba(0,0,0,.08);
+    transition: transform .15s, box-shadow .2s;
   }
-
-  .emo:hover .dot { transform: translateY(-4px) scale(1.07); }
+  .emo:hover .dot {
+    transform: translateY(-4px) scale(1.08);
+    box-shadow: inset 0 -3px 0 rgba(0,0,0,.14), 0 8px 18px rgba(0,0,0,.16);
+  }
   .emo:active .dot { transform: scale(.94); }
+  .emo .lbl { font-size: 11px; opacity: .8; }
 
-  .lbl { font-size: 12px; color: #000; }
-
-  /* --- Подвал --- */
   .footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding-top: 14px;
-    border-top: 1px solid rgba(176, 1, 73, .22);
+    display: flex; justify-content: space-between; align-items: center;
+    padding-top: 14px; border-top: 1px solid rgba(176,1,73,.2);
     font-size: 13px;
   }
-
   .link {
-    border: none;
-    background: none;
-    padding: 0;
-    font: inherit;
-    color: #b00149;
-    text-decoration: underline;
-    cursor: pointer;
+    border: none; background: none; padding: 0; font: inherit;
+    color: #b00149; text-decoration: underline; cursor: pointer;
   }
 
-  @media (max-width: 380px) {
-    .slot { width: 72px; height: 72px; }
-    .plus { line-height: 72px; }
-    .dot { width: 48px; height: 48px; }
+  .book-modal {
+    position: fixed; inset: 0; background: rgba(30,10,20,.45);
+    display: none; align-items: center; justify-content: center;
+    padding: 16px; z-index: 100; backdrop-filter: blur(3px);
+  }
+  .book-modal.open { display: flex; animation: fadeIn .2s ease; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  .book-card {
+    background: #f4d5bb; border-radius: 16px; width: 100%;
+    max-width: 480px; max-height: 88vh; display: flex; flex-direction: column;
+    overflow: hidden; box-shadow: 0 24px 60px rgba(0,0,0,.35);
+    animation: slideUp .3s cubic-bezier(.2, 1, .4, 1);
+  }
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px) scale(.97); }
+    to   { opacity: 1; transform: translateY(0)   scale(1); }
+  }
+
+  .book-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 18px 10px;
+  }
+  .book-header h2 { margin: 0; font-size: 19px; color: #b00149; }
+
+  .close-btn {
+    width: 30px; height: 30px; border-radius: 50%; border: none;
+    background: rgba(176,1,73,.1); color: #b00149; font-size: 20px;
+    line-height: 1; cursor: pointer; transition: background .15s;
+  }
+  .close-btn:hover { background: rgba(176,1,73,.2); }
+
+  .book-tabs { display: flex; gap: 4px; padding: 0 18px 10px; }
+  .tab {
+    flex: 1; padding: 9px 12px; border: none; background: rgba(176,1,73,.08);
+    color: #b00149; font-family: inherit; font-size: 13px; font-weight: 600;
+    border-radius: 8px; cursor: pointer; transition: background .15s;
+  }
+  .tab.active { background: #b00149; color: #fff; }
+  .tab:not(.active):hover { background: rgba(176,1,73,.15); }
+
+  .book-list {
+    overflow-y: auto; padding: 4px 18px 18px;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .book-section {
+    font-size: 11px; font-weight: 700; letter-spacing: .5px;
+    text-transform: uppercase; color: #b00149; opacity: .7;
+    margin: 10px 0 2px; text-align: left;
+  }
+  .book-section:first-child { margin-top: 0; }
+
+  .book-item {
+    background: rgba(255,255,255,.5); border-radius: 10px;
+    padding: 12px 14px; cursor: pointer; border: 1px solid rgba(176,1,73,.08);
+    transition: background .15s, border-color .15s;
+    animation: itemIn .25s ease;
+  }
+  @keyframes itemIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .book-item:hover { background: rgba(255,255,255,.85); border-color: rgba(176,1,73,.25); }
+  .book-item.locked { cursor: default; opacity: .55; }
+  .book-item.locked:hover { background: rgba(255,255,255,.5); border-color: rgba(176,1,73,.08); }
+
+  .book-item-header { display: flex; align-items: center; gap: 10px; }
+  .book-item-dot {
+    width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
+    box-shadow: inset 0 -2px 0 rgba(0,0,0,.14);
+  }
+  .book-item-dot.locked-dot {
+    background: repeating-linear-gradient(45deg, #c9b8a8, #c9b8a8 4px, #b8a898 4px, #b8a898 8px) !important;
+  }
+  .book-item-name { font-weight: 700; color: #b00149; font-size: 15px; text-align: left; }
+  .book-item-recipe { font-size: 11px; opacity: .55; margin-top: 2px; text-align: left; }
+  .book-item-desc {
+    margin-top: 10px; padding-top: 10px;
+    border-top: 1px solid rgba(176,1,73,.12);
+    font-size: 13px; line-height: 1.5; text-align: left; display: none;
+  }
+  .book-item.open .book-item-desc { display: block; animation: itemIn .2s ease; }
+
+  @media (max-width: 400px) {
+    h1 { font-size: 20px; }
+    .slot { width: 50px; height: 50px; }
+    .slot .slot-name { font-size: 8px; }
+    .plus { font-size: 13px; }
+    .emo .dot { width: 46px; height: 46px; }
+    .result-dot { width: 66px; height: 66px; }
+    .result-wrap { width: 80px; height: 80px; }
   }
 </style>
 </head>
 <body>
 
 <div class="app">
-  <h1>Совмещение эмоций</h1>
-  <p class="sub">Выбери две эмоции и смешай их</p>
+  <div class="header">
+    <h1>Совмещение эмоций</h1>
+    <button class="book-btn" id="bookBtn" aria-label="Книга эмоций">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+      </svg>
+      <span class="badge" id="badge" style="display:none"></span>
+    </button>
+  </div>
+  <p class="sub">Выбери до 4 эмоций и смешай их</p>
 
   <div class="mixer">
-    <div class="slot-wrap">
-      <button class="slot" data-i="0" aria-label="первый слот"></button>
-      <div class="slot-label" id="lab0"></div>
-    </div>
-    <div class="plus">+</div>
-    <div class="slot-wrap">
-      <button class="slot" data-i="1" aria-label="второй слот"></button>
-      <div class="slot-label" id="lab1"></div>
-    </div>
+    <button class="slot" data-i="0" aria-label="слот 1"></button>
+    <span class="plus">+</span>
+    <button class="slot" data-i="1" aria-label="слот 2"></button>
+    <span class="plus">+</span>
+    <button class="slot" data-i="2" aria-label="слот 3"></button>
+    <span class="plus">+</span>
+    <button class="slot" data-i="3" aria-label="слот 4"></button>
   </div>
 
   <button class="btn" id="mixBtn" disabled>Смешать</button>
 
   <div class="result">
-    <div class="result-dot" id="resultDot"></div>
+    <div class="result-wrap">
+      <div class="result-glow" id="glow"></div>
+      <div class="result-dot" id="resultDot"></div>
+      <div class="particles" id="particles"></div>
+    </div>
     <div class="result-name" id="resultName"></div>
+    <div class="result-tag" id="resultTag"></div>
   </div>
 
   <div class="palette" id="palette"></div>
 
   <div class="footer">
-    <span id="counter">Открыто: 0 / 15</span>
+    <span id="counter">Открыто: 0 / 30</span>
     <button class="link" id="resetBtn">Сброс</button>
   </div>
 </div>
 
+<div class="book-modal" id="bookModal">
+  <div class="book-card">
+    <div class="book-header">
+      <h2>Книга эмоций</h2>
+      <button class="close-btn" id="closeBook" aria-label="Закрыть">×</button>
+    </div>
+    <div class="book-tabs">
+      <button class="tab active" data-tab="base">Базовые</button>
+      <button class="tab" data-tab="mix">Смеси</button>
+    </div>
+    <div class="book-list" id="bookList"></div>
+  </div>
+</div>
+
 <script>
+  /* ===================== ДАННЫЕ ===================== */
+
   const EMO = {
-    anger:   { name: 'Злость',      color: '#e03131' },
-    happy:   { name: 'Счастье',     color: '#f2c31a' },
-    sad:     { name: 'Грусть',      color: '#3b7ddd' },
-    disgust: { name: 'Отвращение',  color: '#3fae5a' },
-    neutral: { name: 'Безразличие', color: '#9aa0a6' }
+    anger:   { name: 'Злость',      color: '#e03131', desc: 'Горячая, резкая реакция на препятствие или несправедливость. Сжимает кулаки, ускоряет пульс, требует действия.' },
+    happy:   { name: 'Счастье',     color: '#f2c31a', desc: 'Тёплое чувство удовлетворённости и радости. Хочется улыбаться, делиться, обнимать весь мир.' },
+    sad:     { name: 'Грусть',      color: '#3b7ddd', desc: 'Тихое чувство потери или разочарования. Опускает плечи, замедляет время, просит уединения.' },
+    disgust: { name: 'Отвращение',  color: '#3fae5a', desc: 'Реакция на нечто неприятное или несовместимое. Заставляет отшатнуться и поморщиться.' },
+    neutral: { name: 'Безразличие', color: '#9aa0a6', desc: 'Ровное спокойное состояние без ярких оценок. Мир идёт своим чередом — и пусть.' }
   };
 
-  const COMBOS = {
-    'anger+anger':     'Ярость',
-    'anger+disgust':   'Ненависть',
+  /* --- Ключи пишутся в удобном порядке, при загрузке нормализуются --- */
+
+  const PAIRS_RAW = {
     'anger+happy':     'Злорадство',
-    'anger+neutral':   'Раздражение',
     'anger+sad':       'Обида',
-    'disgust+disgust': 'Омерзение',
-    'disgust+happy':   'Сарказм',
-    'disgust+neutral': 'Пренебрежение',
-    'disgust+sad':     'Уныние',
-    'happy+happy':     'Эйфория',
-    'happy+neutral':   'Пофигизм',
+    'anger+disgust':   'Ненависть',
+    'anger+neutral':   'Раздражение',
     'happy+sad':       'Ностальгия',
-    'neutral+neutral': 'Пофигизм',
-    'neutral+sad':     'Опустошённость',
-    'sad+sad':         'Депрессия'
+    'happy+disgust':   'Сарказм',
+    'happy+neutral':   'Пофигизм',
+    'sad+disgust':     'Уныние',
+    'sad+neutral':     'Опустошённость',
+    'disgust+neutral': 'Пренебрежение'
   };
 
-  const TOTAL = Object.keys(COMBOS).length;
+  const PAIR_DESC = {
+    'anger+happy':     'Радость от чужой беды. Улыбка, от которой холодеет спина.',
+    'anger+sad':       'Злость, которой не дали выйти наружу. Горький осадок на дне.',
+    'anger+disgust':   'Глубокое, устойчивое отторжение. Хочет не просто навредить, а стереть из существования.',
+    'anger+neutral':   'Тлеющее недовольство. Ещё не пожар, но уже дым в глаза.',
+    'happy+sad':       'Тёплая улыбка сквозь слёзы. Прошлое, которое уже не вернуть, но приятно вспомнить.',
+    'happy+disgust':   'Улыбка с привкусом желчи. Вежливость, за которой прячется острое лезвие.',
+    'happy+neutral':   'Спокойная удовлетворённость без причины. Мир идёт своим чередом, и меня это устраивает.',
+    'sad+disgust':     'Тягучее отвращение к происходящему. Всё кажется серым и липким.',
+    'sad+neutral':     'Тихая пустота внутри. Ни горя, ни радости — только ровный серый фон.',
+    'disgust+neutral': 'Спокойное, почти ленивое отторжение. Не считает нужным даже злиться.'
+  };
 
-  const slots      = [null, null];
-  const found      = new Set();
-  const mixBtn     = document.getElementById('mixBtn');
-  const resultDot  = document.getElementById('resultDot');
-  const resultName = document.getElementById('resultName');
-  const counter    = document.getElementById('counter');
-  const palette    = document.getElementById('palette');
+  const TRIOS_RAW = {
+    'anger+happy+sad':       'Смятение',
+    'anger+happy+disgust':   'Зависть',
+    'anger+happy+neutral':   'Азарт',
+    'anger+sad+disgust':     'Презрение',
+    'anger+sad+neutral':     'Разочарование',
+    'anger+disgust+neutral': 'Насмешка',
+    'happy+sad+disgust':     'Ирония',
+    'happy+sad+neutral':     'Меланхолия',
+    'happy+disgust+neutral': 'Снисходительность',
+    'sad+disgust+neutral':   'Тоска'
+  };
 
-  const comboKey = (a, b) => [a, b].sort().join('+');
+  const TRIO_DESC = {
+    'anger+happy+sad':       'Противоречивые чувства рвут изнутри. Смех и слёзы одновременно — и не понять, чего больше.',
+    'anger+happy+disgust':   'Хочу, чтобы у меня было как у тебя — но лучше. И чтобы у тебя не было.',
+    'anger+happy+neutral':   'Драйв, предвкушение победы. Кровь кипит, руки чешутся, хочется действовать.',
+    'anger+sad+disgust':     'Холодная брезгливость с оттенком гнева. Ты ниже меня, и я не желаю тебе добра.',
+    'anger+sad+neutral':     'Ожидание хорошего, которое не сбылось. Горько, но уже не больно.',
+    'anger+disgust+neutral': 'Спокойное, чуть брезгливое веселье над чужой глупостью.',
+    'happy+sad+disgust':     'Улыбка над абсурдом. Смешно, противно и грустно одновременно.',
+    'happy+sad+neutral':     'Тихая светлая грусть без причины. Всё хорошо, но что-то не так.',
+    'happy+disgust+neutral': 'Добродушное пренебрежение. Смотришь и снисходительно улыбаешься — мол, что с них взять.',
+    'sad+disgust+neutral':   'Тягучее серое состояние. Ничего не хочется, всё кажется пустым и пресным.'
+  };
 
-  function mixColors(c1, c2) {
-    const parse = h => [1, 3, 5].map(i => parseInt(h.substr(i, 2), 16));
-    const a = parse(c1), b = parse(c2);
-    return '#' + a.map((v, i) =>
-      Math.round((v + b[i]) / 2).toString(16).padStart(2, '0')
-    ).join('');
+  const QUADS_RAW = {
+    'anger+happy+sad+disgust':     'Смятение чувств',
+    'anger+happy+sad+neutral':     'Безысходность',
+    'anger+happy+disgust+neutral': 'Цинизм',
+    'anger+sad+disgust+neutral':   'Горечь',
+    'happy+sad+disgust+neutral':   'Ирония судьбы'
+  };
+
+  const QUAD_DESC = {
+    'anger+happy+sad+disgust':     'Полный хаос внутри. Смех, слёзы, ярость и отвращение — всё сразу и ничто по-настоящему.',
+    'anger+happy+sad+neutral':     'Всё вроде бы есть, но ничего не радует. Опускаются руки, и уже не хочется бороться.',
+    'anger+happy+disgust+neutral': 'Умное, усталое презрение к миру. Всё знаешь наперёд, ничему не удивляешься, ни во что не веришь.',
+    'anger+sad+disgust+neutral':   'Тяжёлый осадок от жизни. Не злость уже, не отвращение — просто горько и всё.',
+    'happy+sad+disgust+neutral':   'Смешно и грустно смотреть, как всё идёт не так, и уже даже не противно.'
+  };
+
+  const STACK = {
+    anger:   ['Ярость',    'Бешенство', 'Слепая ярость'],
+    happy:   ['Эйфория',   'Восторг',   'Транс'],
+    sad:     ['Депрессия', 'Отчаяние',  'Скорбь'],
+    disgust: ['Омерзение', 'Гадость',   'Тошнота'],
+    neutral: ['Апатия',    'Нигилизм',  'Пустота']
+  };
+
+  const STACK_DESC = {
+    anger:   'Раскалённая злость без остатка. Сметает всё на пути, не оставляет места для мысли.',
+    happy:   'Счастье без границ. Мир искрится, тело невесомо, невозможно усидеть на месте.',
+    sad:     'Тяжёлая, всепоглощающая грусть. Нет дна, нет выхода — только серое на дне.',
+    disgust: 'Тотальное физическое отторжение. Хочется отмыться, даже если ничего не касался.',
+    neutral: 'Полное безразличие. Ни желаний, ни эмоций — просто ровный ноль.'
+  };
+
+  /* ===================== НОРМАЛИЗАЦИЯ КЛЮЧЕЙ ===================== */
+  // Сортировка идёт по кодам символов, поэтому 'anger+disgust+happy'
+  // это «правильный» ключ, а 'anger+happy+disgust' — нет.
+
+  const normalizeKey = k => k.split('+').sort().join('+');
+
+  function normalizeMap(map) {
+    const out = {};
+    for (const [k, v] of Object.entries(map)) out[normalizeKey(k)] = v;
+    return out;
   }
+
+  const PAIRS = normalizeMap(PAIRS_RAW);
+  const TRIOS = normalizeMap(TRIOS_RAW);
+  const QUADS = normalizeMap(QUADS_RAW);
+
+  const TOTAL = 10 + 10 + 5 + 5;
+
+  /* ===================== СОСТОЯНИЕ ===================== */
+
+  const slots = [null, null, null, null];
+  const found = new Set();
+  let currentTab = 'base';
+
+  const $ = id => document.getElementById(id);
+  const mixBtn     = $('mixBtn');
+  const resultDot  = $('resultDot');
+  const resultName = $('resultName');
+  const resultTag  = $('resultTag');
+  const resultGlow = $('glow');
+  const particles  = $('particles');
+  const counter    = $('counter');
+  const palette    = $('palette');
+  const bookModal  = $('bookModal');
+  const bookList   = $('bookList');
+  const badge      = $('badge');
+
+  /* ===================== ЦВЕТА ===================== */
+
+  const parseHex = h => [1, 3, 5].map(i => parseInt(h.substr(i, 2), 16));
+  const toHex = arr => '#' + arr.map(v =>
+    Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0')
+  ).join('');
+
+  function mixColorsMulti(colors) {
+    const rgbs = colors.map(parseHex);
+    const avg = [0, 1, 2].map(j => rgbs.reduce((s, c) => s + c[j], 0) / rgbs.length);
+    return toHex(avg);
+  }
+
+  /* ===================== СЛОТЫ ===================== */
 
   function renderSlots() {
-    [0, 1].forEach(i => {
-      const el  = document.querySelector('.slot[data-i="' + i + '"]');
-      const lab = document.getElementById('lab' + i);
-      const id  = slots[i];
-
+    [0, 1, 2, 3].forEach(i => {
+      const el = document.querySelector('.slot[data-i="' + i + '"]');
+      const id = slots[i];
+      el.innerHTML = '';
       if (id) {
-        el.style.background   = EMO[id].color;
-        el.style.borderStyle  = 'solid';
-        el.style.borderColor  = 'transparent';
-        lab.textContent = EMO[id].name;
+        el.classList.add('filled');
+        el.style.background = EMO[id].color;
+        const span = document.createElement('span');
+        span.className = 'slot-name';
+        span.textContent = EMO[id].name;
+        el.appendChild(span);
       } else {
-        el.style.background  = 'transparent';
-        el.style.borderStyle = 'dashed';
-        el.style.borderColor = '#b00149';
-        lab.textContent = '';
+        el.classList.remove('filled');
+        el.style.background = 'transparent';
       }
     });
-    mixBtn.disabled = !(slots[0] && slots[1]);
-  }
-
-  function clearResult() {
-    resultDot.classList.remove('show');
-    resultName.textContent = '';
+    const n = slots.filter(Boolean).length;
+    mixBtn.disabled = n < 2;
+    mixBtn.textContent = n < 2 ? 'Смешать' : 'Смешать ' + n + ' эмоции';
   }
 
   function pick(id) {
     clearResult();
-    if (!slots[0])      slots[0] = id;
-    else if (!slots[1]) slots[1] = id;
-    else                slots[1] = id;   // заменяем последнюю
+    let idx = slots.indexOf(null);
+    if (idx === -1) idx = 3;
+    slots[idx] = id;
     renderSlots();
+    const el = document.querySelector('.slot[data-i="' + idx + '"]');
+    el.classList.remove('pop');
+    void el.offsetWidth;
+    el.classList.add('pop');
   }
 
-  function mix() {
-    if (!slots[0] || !slots[1]) return;
+  /* ===================== ЛОГИКА ===================== */
 
-    const key  = comboKey(slots[0], slots[1]);
-    const name = COMBOS[key] || 'Неизвестное чувство';
+  function computeResult(ids) {
+    const distinct = [...new Set(ids)].sort();
 
-    resultDot.style.background = mixColors(EMO[slots[0]].color, EMO[slots[1]].color);
-    resultName.textContent = name;
+    // Одна и та же эмоция N раз — усиление
+    if (distinct.length === 1) {
+      const emo = distinct[0];
+      const idx = Math.min(ids.length - 2, 2);
+      return {
+        name: STACK[emo][idx],
+        key:  emo + '_stack',
+        tag:  EMO[emo].name + ' × ' + ids.length,
+        type: 'stack'
+      };
+    }
 
-    // перезапуск анимации
-    resultDot.classList.remove('show');
-    void resultDot.offsetWidth;
-    resultDot.classList.add('show');
+    const key = distinct.join('+');   // уже отсортировано — совпадает с нормализованными ключами
 
-    if (COMBOS[key]) {
-      found.add(key);
-      counter.textContent = 'Открыто: ' + found.size + ' / ' + TOTAL;
+    let name, type, tag;
+
+    if (distinct.length === 2) {
+      name = PAIRS[key];
+      type = 'pair';
+      tag  = '2 эмоции';
+    } else if (distinct.length === 3) {
+      name = TRIOS[key];
+      type = 'trio';
+      tag  = '3 эмоции';
+    } else {
+      name = QUADS[key];
+      type = 'quad';
+      tag  = '4 эмоции';
+    }
+
+    // Защитный fallback — если что-то пошло не так
+    if (!name) {
+      name = 'Неизвестное чувство';
+      type = 'unknown';
+    }
+
+    return { name, key, tag, type };
+  }
+
+  /* ===================== ЧАСТИЦЫ ===================== */
+
+  function spawnParticles(color) {
+    const n = 20;
+    for (let i = 0; i < n; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      p.style.background = color;
+      const angle = (Math.PI * 2 * i) / n + Math.random() * 0.4;
+      const dist  = 45 + Math.random() * 45;
+      p.style.setProperty('--dx', (Math.cos(angle) * dist).toFixed(1) + 'px');
+      p.style.setProperty('--dy', (Math.sin(angle) * dist).toFixed(1) + 'px');
+      p.style.animationDelay = (Math.random() * 0.12).toFixed(2) + 's';
+      const sz = (5 + Math.random() * 5).toFixed(0) + 'px';
+      p.style.width = sz;
+      p.style.height = sz;
+      particles.appendChild(p);
+      setTimeout(() => p.remove(), 1200);
     }
   }
 
-  // Палитра эмоций
+  /* ===================== РЕЗУЛЬТАТ ===================== */
+
+  function clearResult() {
+    resultDot.classList.remove('show');
+    resultGlow.classList.remove('show');
+    resultName.classList.remove('appear');
+    resultName.textContent = '';
+    resultTag.textContent = '';
+  }
+
+  function mix() {
+    const filled = slots.filter(Boolean);
+    if (filled.length < 2) return;
+
+    const result = computeResult(filled);
+    const color  = mixColorsMulti(filled.map(id => EMO[id].color));
+
+    resultDot.style.background  = color;
+    resultGlow.style.background = color;
+    resultName.textContent = result.name;
+    resultTag.textContent  = result.tag;
+
+    resultDot.classList.remove('show');
+    resultGlow.classList.remove('show');
+    resultName.classList.remove('appear');
+    void resultDot.offsetWidth;
+    resultDot.classList.add('show');
+    resultGlow.classList.add('show');
+    resultName.classList.add('appear');
+
+    spawnParticles(color);
+
+    // Добавляем в найденное только реальные комбинации
+    if (result.type !== 'unknown' && !found.has(result.key)) {
+      found.add(result.key);
+      saveFound();
+      counter.textContent = 'Открыто: ' + found.size + ' / ' + TOTAL;
+      badge.style.display = 'block';
+      if (currentTab === 'mix' && bookModal.classList.contains('open')) renderBook('mix');
+    }
+  }
+
+  /* ===================== КНИГА ===================== */
+
+  function makeSection(title) {
+    const s = document.createElement('div');
+    s.className = 'book-section';
+    s.textContent = title;
+    return s;
+  }
+
+  function makeItem(opts) {
+    const { name, recipe, desc, color, isFound } = opts;
+    const item = document.createElement('div');
+    item.className = 'book-item' + (isFound ? '' : ' locked');
+    const dot = document.createElement('div');
+    dot.className = 'book-item-dot ' + (isFound ? '' : 'locked-dot');
+    if (isFound && color) dot.style.background = color;
+
+    const head = document.createElement('div');
+    head.className = 'book-item-header';
+    const txtWrap = document.createElement('div');
+    txtWrap.style.cssText = 'flex:1; min-width:0; text-align:left;';
+
+    const nameEl = document.createElement('div');
+    nameEl.className = 'book-item-name';
+    nameEl.textContent = isFound ? name : '???';
+
+    const recEl = document.createElement('div');
+    recEl.className = 'book-item-recipe';
+    recEl.textContent = recipe;
+
+    txtWrap.appendChild(nameEl);
+    txtWrap.appendChild(recEl);
+    head.appendChild(dot);
+    head.appendChild(txtWrap);
+    item.appendChild(head);
+
+    if (isFound && desc) {
+      const descEl = document.createElement('div');
+      descEl.className = 'book-item-desc';
+      descEl.textContent = desc;
+      item.appendChild(descEl);
+      item.addEventListener('click', () => item.classList.toggle('open'));
+    }
+    return item;
+  }
+
+  function renderBook(tab) {
+    bookList.innerHTML = '';
+
+    if (tab === 'base') {
+      Object.entries(EMO).forEach(([id, e]) => {
+        const item = document.createElement('div');
+        item.className = 'book-item';
+        item.innerHTML =
+          '<div class="book-item-header">' +
+            '<div class="book-item-dot" style="background:' + e.color + '"></div>' +
+            '<div style="flex:1; min-width:0; text-align:left;">' +
+              '<div class="book-item-name">' + e.name + '</div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="book-item-desc">' + e.desc + '</div>';
+        item.addEventListener('click', () => item.classList.toggle('open'));
+        bookList.appendChild(item);
+      });
+      return;
+    }
+
+    bookList.appendChild(makeSection('Пары эмоций'));
+
+    Object.entries(PAIRS_RAW).forEach(([rawKey, name]) => {
+      const norm = normalizeKey(rawKey);
+      const [a, b] = rawKey.split('+');
+      bookList.appendChild(makeItem({
+        name,
+        recipe: EMO[a].name + ' + ' + EMO[b].name,
+        desc:   PAIR_DESC[rawKey] || PAIR_DESC[norm],
+        color:  mixColorsMulti([EMO[a].color, EMO[b].color]),
+        isFound: found.has(norm)
+      }));
+    });
+
+    bookList.appendChild(makeSection('Тройки эмоций'));
+
+    Object.entries(TRIOS_RAW).forEach(([rawKey, name]) => {
+      const norm = normalizeKey(rawKey);
+      const parts = rawKey.split('+');
+      bookList.appendChild(makeItem({
+        name,
+        recipe: parts.map(p => EMO[p].name).join(' + '),
+        desc:   TRIO_DESC[rawKey] || TRIO_DESC[norm],
+        color:  mixColorsMulti(parts.map(p => EMO[p].color)),
+        isFound: found.has(norm)
+      }));
+    });
+
+    bookList.appendChild(makeSection('Четвёрки эмоций'));
+
+    Object.entries(QUADS_RAW).forEach(([rawKey, name]) => {
+      const norm = normalizeKey(rawKey);
+      const parts = rawKey.split('+');
+      bookList.appendChild(makeItem({
+        name,
+        recipe: parts.map(p => EMO[p].name).join(' + '),
+        desc:   QUAD_DESC[rawKey] || QUAD_DESC[norm],
+        color:  mixColorsMulti(parts.map(p => EMO[p].color)),
+        isFound: found.has(norm)
+      }));
+    });
+
+    bookList.appendChild(makeSection('Усиление эмоции × 2–4'));
+
+    Object.keys(STACK).forEach(emo => {
+      const key = emo + '_stack';
+      bookList.appendChild(makeItem({
+        name:   STACK[emo].join(' / '),
+        recipe: EMO[emo].name + ' × 2, 3 или 4',
+        desc:   STACK_DESC[emo],
+        color:  EMO[emo].color,
+        isFound: found.has(key)
+      }));
+    });
+  }
+
+  /* ===================== ХРАНИЛИЩЕ ===================== */
+
+  function saveFound() {
+    try { localStorage.setItem('emo-found-v2', JSON.stringify([...found])); } catch (e) {}
+  }
+
+  function loadFound() {
+    try {
+      const raw = localStorage.getItem('emo-found-v2');
+      if (!raw) return;
+      JSON.parse(raw).forEach(k => {
+        if (k.endsWith('_stack')) {
+          if (STACK[k.replace('_stack', '')]) found.add(k);
+        } else {
+          const norm = normalizeKey(k);
+          if (PAIRS[norm] || TRIOS[norm] || QUADS[norm]) found.add(norm);
+        }
+      });
+      counter.textContent = 'Открыто: ' + found.size + ' / ' + TOTAL;
+      if (found.size > 0 && found.size < TOTAL) badge.style.display = 'block';
+    } catch (e) {}
+  }
+
+  /* ===================== ПАЛИТРА ===================== */
+
   Object.entries(EMO).forEach(([id, e]) => {
     const b = document.createElement('button');
     b.className = 'emo';
@@ -332,7 +772,8 @@
     palette.appendChild(b);
   });
 
-  // Клик по слоту — очистить
+  /* ===================== СОБЫТИЯ ===================== */
+
   document.querySelectorAll('.slot').forEach(el => {
     el.addEventListener('click', () => {
       slots[+el.dataset.i] = null;
@@ -343,12 +784,34 @@
 
   mixBtn.addEventListener('click', mix);
 
-  document.getElementById('resetBtn').addEventListener('click', () => {
-    slots[0] = slots[1] = null;
+  $('resetBtn').addEventListener('click', () => {
+    for (let i = 0; i < 4; i++) slots[i] = null;
     clearResult();
     renderSlots();
   });
 
+  $('bookBtn').addEventListener('click', () => {
+    bookModal.classList.add('open');
+    badge.style.display = 'none';
+    renderBook(currentTab);
+  });
+
+  $('closeBook').addEventListener('click', () => bookModal.classList.remove('open'));
+  bookModal.addEventListener('click', e => { if (e.target === bookModal) bookModal.classList.remove('open'); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') bookModal.classList.remove('open'); });
+
+  document.querySelectorAll('.tab').forEach(t => {
+    t.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+      t.classList.add('active');
+      currentTab = t.dataset.tab;
+      renderBook(currentTab);
+    });
+  });
+
+  /* ===================== СТАРТ ===================== */
+
+  loadFound();
   renderSlots();
 </script>
 </body>
